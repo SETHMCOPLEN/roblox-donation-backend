@@ -1,25 +1,35 @@
 const express = require('express');
-const cors = require('cors');
+const axios = require('axios');
+
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.get('/api/passes', async (req, res) => {
+  const userId = req.query.userId;
+  if (!userId) return res.status(400).json({ success: false, message: 'userId required' });
 
-app.get('/gamepasses/:username', (req, res) => {
-  const username = req.params.username;
+  let passes = [];
+  let cursor = '';
+  do {
+    try {
+      const url = `https://inventory.roblox.com/v1/users/${userId}/assets/collectibles?assetType=34&limit=100&cursor=${cursor}`;
+      const response = await axios.get(url);
+      response.data.data.forEach(item => {
+        if (item.priceInRobux > 0) {
+          passes.push({
+            id: item.assetId,
+            name: item.name,
+            price: item.priceInRobux
+          });
+        }
+      });
+      cursor = response.data.nextPageCursor || '';
+    } catch (e) {
+      return res.json({ success: false, error: e.message });
+    }
+  } while (cursor);
 
-  const fakeGamepasses = [
-    { id: 123456, name: 'Donación 5 Robux', price: 5 },
-    { id: 123457, name: 'Donación 10 Robux', price: 10 },
-    { id: 123458, name: 'Donación 50 Robux', price: 50 }
-  ];
-
-  res.json({
-    user: username,
-    gamepasses: fakeGamepasses
-  });
+  passes.sort((a, b) => a.price - b.price);
+  res.json(passes);
 });
 
-app.listen(PORT, () => {
-  console.log(`Servidor escuchando en el puerto ${PORT}`);
-});
+app.listen(3000, () => console.log('Server running'));
