@@ -5,7 +5,7 @@ const app = express();
 
 app.get('/api/passes', async (req, res) => {
   const userId = req.query.userId;
-  if (!userId) return res.status(400).json({ success: false, message: 'userId required' });
+  if (!userId) return res.status(400).json({ success: false });
 
   let passes = [];
   let cursor = '';
@@ -32,4 +32,5 @@ app.get('/api/passes', async (req, res) => {
   res.json(passes);
 });
 
-app.listen(3000, () => console.log('Server running'));
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log('Server running'));
